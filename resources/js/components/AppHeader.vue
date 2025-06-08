@@ -10,10 +10,13 @@ import { Sheet, SheetContent, SheetHeader, SheetTitle, SheetTrigger } from '@/co
 import { Tooltip, TooltipContent, TooltipProvider, TooltipTrigger } from '@/components/ui/tooltip';
 import UserMenuContent from '@/components/UserMenuContent.vue';
 import { getInitials } from '@/composables/useInitials';
-import type { BreadcrumbItem, NavItem } from '@/types';
+import type { BreadcrumbItem } from '@/types';
 import { Link, usePage } from '@inertiajs/vue3';
-import { BookOpen, Folder, LayoutGrid, Menu, Search } from 'lucide-vue-next';
+import { Menu, Search } from 'lucide-vue-next';
 import { computed } from 'vue';
+// Icons
+import { useNavigationStore } from '@/stores/navigationStore';
+import { ChevronDown } from 'lucide-vue-next';
 
 interface Props {
     breadcrumbs?: BreadcrumbItem[];
@@ -31,27 +34,9 @@ const isCurrentRoute = computed(() => (url: string) => page.url === url);
 const activeItemStyles = computed(
     () => (url: string) => (isCurrentRoute.value(url) ? 'text-neutral-900 dark:bg-neutral-800 dark:text-neutral-100' : ''),
 );
-
-const mainNavItems: NavItem[] = [
-    {
-        title: 'Dashboard',
-        href: '/dashboard',
-        icon: LayoutGrid,
-    },
-];
-
-const rightNavItems: NavItem[] = [
-    {
-        title: 'Repository',
-        href: 'https://github.com/laravel/vue-starter-kit',
-        icon: Folder,
-    },
-    {
-        title: 'Documentation',
-        href: 'https://laravel.com/docs/starter-kits#vue',
-        icon: BookOpen,
-    },
-];
+const navigationStore = useNavigationStore();
+const mainNavItems = computed(() => navigationStore.mainNavItems);
+const rightNavItems = computed(() => navigationStore.rightNavItems);
 </script>
 
 <template>
@@ -73,16 +58,44 @@ const rightNavItems: NavItem[] = [
                             </SheetHeader>
                             <div class="flex h-full flex-1 flex-col justify-between space-y-4 py-6">
                                 <nav class="-mx-3 space-y-1">
-                                    <Link
-                                        v-for="item in mainNavItems"
-                                        :key="item.title"
-                                        :href="item.href"
-                                        class="flex items-center gap-x-3 rounded-lg px-3 py-2 text-sm font-medium hover:bg-accent"
-                                        :class="activeItemStyles(item.href)"
-                                    >
-                                        <component v-if="item.icon" :is="item.icon" class="h-5 w-5" />
-                                        {{ item.title }}
-                                    </Link>
+                                    <template v-for="item in mainNavItems" :key="item.title">
+                                        <!-- Parent item with no children -->
+                                        <Link
+                                            v-if="!item.children?.length"
+                                            :href="item.href"
+                                            class="flex items-center gap-x-3 rounded-lg px-3 py-2 text-sm font-medium hover:bg-accent"
+                                            :class="activeItemStyles(item.href)"
+                                        >
+                                            <component v-if="item.icon" :is="item.icon" class="h-5 w-5" />
+                                            {{ item.title }}
+                                        </Link>
+
+                                        <!-- Parent item with children -->
+                                        <div v-else class="space-y-1">
+                                            <div
+                                                class="flex items-center gap-x-3 rounded-lg px-3 py-2 text-sm font-medium"
+                                                :class="[
+                                                    item.children.some((child) => isCurrentRoute(child.href))
+                                                        ? 'text-neutral-900 dark:text-neutral-100'
+                                                        : '',
+                                                ]"
+                                            >
+                                                <component v-if="item.icon" :is="item.icon" class="h-5 w-5" />
+                                                {{ item.title + 'a' }}
+                                            </div>
+
+                                            <!-- Children items -->
+                                            <Link
+                                                v-for="child in item.children"
+                                                :key="child.title"
+                                                :href="child.href"
+                                                class="flex items-center gap-x-3 rounded-lg py-2 pl-8 text-sm font-medium hover:bg-accent"
+                                                :class="activeItemStyles(child.href)"
+                                            >
+                                                {{ child.title }}
+                                            </Link>
+                                        </div>
+                                    </template>
                                 </nav>
                                 <div class="flex flex-col space-y-4">
                                     <a
@@ -111,17 +124,59 @@ const rightNavItems: NavItem[] = [
                     <NavigationMenu class="ml-10 flex h-full items-stretch">
                         <NavigationMenuList class="flex h-full items-stretch space-x-2">
                             <NavigationMenuItem v-for="(item, index) in mainNavItems" :key="index" class="relative flex h-full items-center">
-                                <Link
-                                    :class="[navigationMenuTriggerStyle(), activeItemStyles(item.href), 'h-9 cursor-pointer px-3']"
-                                    :href="item.href"
-                                >
-                                    <component v-if="item.icon" :is="item.icon" class="mr-2 h-4 w-4" />
-                                    {{ item.title }}
-                                </Link>
-                                <div
-                                    v-if="isCurrentRoute(item.href)"
-                                    class="absolute bottom-0 left-0 h-0.5 w-full translate-y-px bg-black dark:bg-white"
-                                ></div>
+                                <!-- Simple menu item without children -->
+                                <template v-if="!item.children?.length">
+                                    <Link
+                                        :class="[navigationMenuTriggerStyle(), activeItemStyles(item.href), 'h-9 cursor-pointer px-3']"
+                                        :href="item.href"
+                                    >
+                                        <component v-if="item.icon" :is="item.icon" class="mr-2 h-4 w-4" />
+                                        {{ item.title }}
+                                    </Link>
+                                    <!-- Active item underline -->
+                                    <div
+                                        v-if="isCurrentRoute(item.href)"
+                                        class="absolute bottom-0 left-0 h-0.5 w-full translate-y-px bg-black dark:bg-white"
+                                    ></div>
+                                </template>
+
+                                <!-- Menu item with children -->
+                                <template v-else>
+                                    <DropdownMenu>
+                                        <DropdownMenuTrigger :as-child="true">
+                                            <button
+                                                :class="[
+                                                    navigationMenuTriggerStyle(),
+                                                    item.children.some((child) => isCurrentRoute(child.href))
+                                                        ? 'text-neutral-900 dark:text-neutral-100'
+                                                        : '',
+                                                    'flex h-9 cursor-pointer items-center px-3',
+                                                ]"
+                                            >
+                                                <component v-if="item.icon" :is="item.icon" class="mr-2 h-4 w-4" />
+                                                {{ item.title }}
+                                                <ChevronDown class="ml-1 h-4 w-4" />
+                                            </button>
+                                        </DropdownMenuTrigger>
+                                        <DropdownMenuContent align="start">
+                                            <div class="py-1">
+                                                <Link
+                                                    v-for="child in item.children"
+                                                    :key="child.title"
+                                                    :href="child.href"
+                                                    class="flex items-center px-4 py-2 text-sm hover:bg-accent"
+                                                    :class="activeItemStyles(child.href)"
+                                                >
+                                                    {{ child.title }}
+                                                </Link>
+                                            </div>
+                                        </DropdownMenuContent>
+                                    </DropdownMenu>
+                                    <div
+                                        v-if="item.children.some((child) => isCurrentRoute(child.href))"
+                                        class="absolute bottom-0 left-0 h-0.5 w-full translate-y-px bg-black dark:bg-white"
+                                    ></div>
+                                </template>
                             </NavigationMenuItem>
                         </NavigationMenuList>
                     </NavigationMenu>
