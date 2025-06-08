@@ -179,8 +179,6 @@ columns[0].cell = ({ row }) => {
 // API Functions
 async function fetchUsers() {
     isLoading.value = true; // Set loading true sebelum fetch
-    // delay 5 detik
-    await new Promise((resolve) => setTimeout(resolve, 1000));
 
     axios
         .get('/users/list')
