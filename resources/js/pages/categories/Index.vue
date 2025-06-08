@@ -11,8 +11,8 @@ import { Button } from '@/components/ui/button';
 import { Dialog, DialogContent, DialogHeader, DialogTitle } from '@/components/ui/dialog';
 import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
-import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from '@/components/ui/table';
+import { Textarea } from '@/components/ui/textarea';
 import AppLayout from '@/layouts/AppLayout.vue';
 
 // Icons
@@ -36,34 +36,29 @@ import {
 import { type BreadcrumbItem } from '@/types';
 
 // Type Definitions
-type User = {
+type Category = {
     id: number;
     name: string;
-    email: string;
-    role: string;
+    slug: string;
+    description: string | null;
 };
 
 // Page Data
-const breadcrumbItems: BreadcrumbItem[] = [{ title: 'User Management', href: '/users' }];
-const users = ref<User[]>([]);
-const availableRoles = [
-    { value: 'user', label: 'User' },
-    { value: 'admin', label: 'Admin' },
-];
+const breadcrumbItems: BreadcrumbItem[] = [{ title: 'Category Management', href: '/categories' }];
+const categories = ref<Category[]>([]);
 
 // Modal and Dialog States
 const isEdit = ref(false);
 const showModal = ref(false);
 const showDeleteDialog = ref(false);
-const userToDelete = ref<User | null>(null);
+const categoryToDelete = ref<Category | null>(null);
 
 // Form State
 const form = useForm({
     id: null as number | null,
     name: '',
-    email: '',
-    role: '',
-    password: '',
+    description: '',
+    is_active: true,
 });
 
 // Table States
@@ -72,40 +67,37 @@ const sorting = ref([]);
 const isLoading = ref(false);
 
 // Table Columns Definition
-const baseColumns: ColumnDef<User>[] = [
+const baseColumns: ColumnDef<Category>[] = [
     {
         accessorKey: 'name',
         header: 'Name',
         cell: ({ row }) => row.getValue('name'),
         enableSorting: true,
-        // size: 'auto' as unknown as number,
     },
     {
-        accessorKey: 'email',
-        header: 'Email',
-        cell: ({ row }) => row.getValue('email'),
+        accessorKey: 'slug',
+        header: 'Slug',
+        cell: ({ row }) => row.getValue('slug'),
         enableSorting: true,
-        // size: 'auto' as unknown as number,
     },
     {
-        accessorKey: 'role',
-        header: 'Role',
-        cell: ({ row }) => row.getValue('role'),
+        accessorKey: 'description',
+        header: 'Description',
+        cell: ({ row }) => row.getValue('description') || '-',
         enableSorting: true,
-        // size: 'auto' as unknown as number,
     },
     {
         id: 'actions',
         header: 'Actions',
         cell: ({ row }) => {
-            const user = row.original;
+            const category = row.original;
             return h('div', { class: 'flex gap-2' }, [
                 h(
                     Button,
                     {
                         size: 'sm',
                         variant: 'outline',
-                        onClick: () => openEdit(user),
+                        onClick: () => openEdit(category),
                     },
                     () => 'Edit',
                 ),
@@ -114,7 +106,7 @@ const baseColumns: ColumnDef<User>[] = [
                     {
                         size: 'sm',
                         variant: 'destructive',
-                        onClick: () => deleteUser(user),
+                        onClick: () => deleteCategory(category),
                     },
                     () => 'Delete',
                 ),
@@ -125,7 +117,7 @@ const baseColumns: ColumnDef<User>[] = [
     },
 ];
 
-const columns: ColumnDef<User>[] = [
+const columns: ColumnDef<Category>[] = [
     {
         id: 'number',
         header: 'No.',
@@ -142,7 +134,7 @@ const columns: ColumnDef<User>[] = [
 // Table Initialization
 const table = useVueTable({
     get data() {
-        return users.value;
+        return categories.value;
     },
     columns,
     state: {
@@ -177,19 +169,19 @@ columns[0].cell = ({ row }) => {
 };
 
 // API Functions
-async function fetchUsers() {
-    isLoading.value = true; // Set loading true sebelum fetch
+async function fetchCategories() {
+    isLoading.value = true;
 
     axios
-        .get(route('users.list'))
+        .get('/categories/list')
         .then((res) => {
-            users.value = res.data;
+            categories.value = res.data;
         })
         .catch((error) => {
-            console.error('Failed to fetch users:', error);
+            console.error('Failed to fetch categories:', error);
         })
         .finally(() => {
-            isLoading.value = false; // Set loading false setelah fetch selesai
+            isLoading.value = false;
         });
 }
 
@@ -201,16 +193,13 @@ function openAdd() {
     showModal.value = true;
 }
 
-function openEdit(user: User) {
-    console.log(user);
+function openEdit(category: Category) {
     form.clearErrors();
     isEdit.value = true;
     showModal.value = true;
-    form.id = user.id;
-    form.name = user.name;
-    form.email = user.email;
-    form.role = user.role;
-    form.password = '';
+    form.id = category.id;
+    form.name = category.name;
+    form.description = category.description || '';
 }
 
 function closeForm() {
@@ -220,59 +209,59 @@ function closeForm() {
 
 function submit() {
     if (isEdit.value && form.id) {
-        form.put(route('users.update', form.id), {
+        form.put(`/categories/${form.id}`, {
             onSuccess: () => {
-                fetchUsers();
+                fetchCategories();
                 closeForm();
-                toast.success('User has been updated successfully');
+                toast.success('Category has been updated successfully');
             },
             onError: () => {
-                toast.error('Failed to update user');
+                toast.error('Failed to update category');
             },
         });
     } else {
-        form.post(route('users.store'), {
+        form.post('/categories', {
             onSuccess: () => {
-                fetchUsers();
+                fetchCategories();
                 closeForm();
-                toast.success('New user has been added successfully');
+                toast.success('New category has been added successfully');
             },
             onError: () => {
-                toast.error('Failed to add user');
+                toast.error('Failed to add category');
             },
         });
     }
 }
 
 // Delete Dialog Functions
-function openDeleteDialog(user: User) {
-    userToDelete.value = user;
+function openDeleteDialog(category: Category) {
+    categoryToDelete.value = category;
     showDeleteDialog.value = true;
 }
 
 function closeDeleteDialog() {
     showDeleteDialog.value = false;
-    userToDelete.value = null;
+    categoryToDelete.value = null;
 }
 
 function confirmDelete() {
-    if (userToDelete.value) {
+    if (categoryToDelete.value) {
         axios
-            .delete(route('users.destroy', userToDelete.value.id))
+            .delete(`/categories/${categoryToDelete.value.id}`)
             .then(() => {
-                fetchUsers();
+                fetchCategories();
                 closeDeleteDialog();
-                toast.success(`User ${userToDelete.value?.name} has been deleted successfully`);
+                toast.success(`Category ${categoryToDelete.value?.name} has been deleted successfully`);
             })
             .catch((error) => {
-                toast.error('Failed to delete user');
+                toast.error('Failed to delete category');
                 console.error('Delete error:', error);
             });
     }
 }
 
-function deleteUser(user: any) {
-    openDeleteDialog(user);
+function deleteCategory(category: Category) {
+    openDeleteDialog(category);
 }
 
 // Table Helper Functions
@@ -289,66 +278,39 @@ function setSorting(updater: any) {
 }
 
 // Lifecycle Hooks
-onMounted(fetchUsers);
+onMounted(fetchCategories);
 </script>
 
 <template>
-    <Head title="User Management" />
+    <Head title="Category Management" />
 
     <AppLayout :breadcrumbs="breadcrumbItems">
         <div class="flex flex-col space-y-6 px-4 py-6">
             <div class="align-center flex items-center justify-between">
-                <HeadingSmall title="Users" description="Manage user accounts for your application." />
+                <HeadingSmall title="Categories" description="Manage categories for your application." />
 
                 <div class="flex justify-end">
-                    <Button @click="openAdd">Add User</Button>
-                    <Button variant="outline" class="ml-2" @click="fetchUsers">Refresh</Button>
+                    <Button @click="openAdd">Add Category</Button>
+                    <Button variant="outline" class="ml-2" @click="fetchCategories">Refresh</Button>
                 </div>
             </div>
 
-            <!-- User Modal Form -->
+            <!-- Category Modal Form -->
             <Dialog :open="showModal" @update:open="showModal = $event">
                 <DialogContent class="sm:max-w-md">
                     <DialogHeader>
-                        <DialogTitle>{{ isEdit ? 'Edit User' : 'Add User' }}</DialogTitle>
+                        <DialogTitle>{{ isEdit ? 'Edit Category' : 'Add Category' }}</DialogTitle>
                     </DialogHeader>
                     <form @submit.prevent="submit" class="space-y-4">
                         <div>
                             <Label for="name" class="mb-2 block">Name</Label>
-                            <Input id="name" v-model="form.name" required placeholder="Name" />
+                            <Input id="name" v-model="form.name" required placeholder="Category Name" />
                             <InputError :message="form.errors.name" />
                         </div>
                         <div>
-                            <Label for="email" class="mb-2 block">Email</Label>
-                            <Input id="email" v-model="form.email" required type="email" placeholder="Email" />
-                            <InputError :message="form.errors.email" />
-                        </div>
-                        <div>
-                            <Label for="role" class="mb-2 block">Role</Label>
-                            <!-- Ganti input text dengan select dropdown -->
-                            <Select v-model="form.role" required>
-                                <SelectTrigger class="w-full">
-                                    <SelectValue placeholder="Select role" />
-                                </SelectTrigger>
-                                <SelectContent>
-                                    <SelectItem v-for="role in availableRoles" :key="role.value" :value="role.value">
-                                        {{ role.label }}
-                                    </SelectItem>
-                                </SelectContent>
-                            </Select>
-                            <InputError :message="form.errors.role" />
-                        </div>
-                        <div>
-                            <Label for="password" class="mb-2 block"> Password <span v-if="isEdit">(isi jika mau ganti)</span> </Label>
-                            <Input
-                                id="password"
-                                v-model="form.password"
-                                :required="!isEdit"
-                                type="password"
-                                autocomplete="new-password"
-                                placeholder="Password"
-                            />
-                            <InputError :message="form.errors.password" />
+                            <Label for="description" class="mb-2 block">Description</Label>
+                            <Textarea id="description" v-model="form.description" placeholder="Description (optional)" />
+                            <InputError :message="form.errors.description" />
                         </div>
                         <div class="flex justify-end gap-3">
                             <Button type="button" variant="ghost" @click="closeForm">Cancel</Button>
@@ -366,7 +328,7 @@ onMounted(fetchUsers);
                     </DialogHeader>
                     <div class="py-4">
                         <p>
-                            Are you sure you want to delete user <strong>{{ userToDelete?.name }}</strong
+                            Are you sure you want to delete category <strong>{{ categoryToDelete?.name }}</strong
                             >?
                         </p>
                         <p class="mt-2 text-sm text-red-600">This action cannot be undone.</p>
@@ -378,13 +340,12 @@ onMounted(fetchUsers);
                 </DialogContent>
             </Dialog>
 
-            <!-- Table User -->
             <!-- Search Input -->
             <div class="flex justify-end py-4">
                 <Input placeholder="Search..." class="max-w-sm" v-model="globalFilter" />
             </div>
 
-            <!-- Table User -->
+            <!-- Table Categories -->
             <div class="rounded-md border">
                 <Table>
                     <TableHeader>
@@ -394,7 +355,8 @@ onMounted(fetchUsers);
                                 :key="column.id"
                                 :class="[
                                     column.getCanSort() ? 'cursor-pointer select-none' : '',
-                                    column.id === 'actions' ? 'w-[200px] max-w-[200px]' : '',
+                                    column.id === 'actions' ? 'w-[100px] max-w-[100px]' : '',
+                                    column.id === 'number' ? 'w-[60px] max-w-[60px]' : '',
                                 ]"
                                 @click="column.getCanSort() ? column.toggleSorting() : null"
                             >
@@ -419,7 +381,6 @@ onMounted(fetchUsers);
                         <template v-else>
                             <TableRow v-for="row in table.getRowModel().rows" :key="row.id" :data-state="row.getIsSelected() && 'selected'">
                                 <TableCell v-for="cell in row.getVisibleCells()" :key="cell.id">
-                                    <!-- Perbaikan: Gunakan FlexRender sebagai component -->
                                     <FlexRender :render="cell.column.columnDef.cell" :props="cell.getContext()" />
                                 </TableCell>
                             </TableRow>
