@@ -186,13 +186,6 @@ async function fetchUsers() {
         .get('/users/list')
         .then((res) => {
             users.value = res.data;
-            // simulasi ada 1000 data
-            users.value = Array.from({ length: 1000 }, (_, i) => ({
-                id: i + 1,
-                name: `User ${i + 1}`,
-                email: `user${i + 1}`,
-                role: i % 2 === 0 ? 'user' : 'admin',
-            }));
         })
         .catch((error) => {
             console.error('Failed to fetch users:', error);
