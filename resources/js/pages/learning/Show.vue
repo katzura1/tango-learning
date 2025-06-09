@@ -96,6 +96,7 @@ function shuffleVocabularies() {
     shuffledVocabularies.value = array;
     currentCardIndex.value = 0;
     isShuffled.value = true;
+    showMeaning.value = false;
 }
 
 // Function to reset original order
@@ -106,6 +107,7 @@ function resetOrder() {
     }));
     currentCardIndex.value = 0;
     isShuffled.value = false;
+    showMeaning.value = false;
 }
 
 // For flashcard functionality
@@ -164,6 +166,7 @@ async function updateStatus(vocabularyId: number, newStatus: string) {
         if (vocabIndex !== -1) {
             shuffledVocabularies.value[vocabIndex].status = newStatus;
         }
+        showMeaning.value = false;
 
         toast.success('Status updated successfully');
     } catch (error) {
