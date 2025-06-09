@@ -1,6 +1,7 @@
 <?php
 namespace App\Models;
 
+use App\Models\Vocabulary;
 use Illuminate\Database\Eloquent\Model;
 
 class Category extends Model
@@ -10,4 +11,9 @@ class Category extends Model
         'slug',
         'description',
     ];
+
+    public function vocabularies()
+    {
+        return $this->hasMany(Vocabulary::class);
+    }
 }
