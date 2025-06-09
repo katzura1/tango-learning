@@ -21,6 +21,8 @@ Route::middleware(['auth'])->group(function () {
     // User Vocabulary routes
     Route::get('/favorites', [UserVocabularyController::class, 'favorites'])->name('favorites.index');
     Route::post('/vocabulary/{vocabulary}/favorite', [UserVocabularyController::class, 'toggleFavorite'])->name('vocabulary.favorite.toggle');
+    Route::post('/vocabulary/{vocabulary}/status', [UserVocabularyController::class, 'updateStatus'])
+        ->name('vocabulary.status.update');
 })->as('learning.');
 
 require __DIR__ . '/settings.php';

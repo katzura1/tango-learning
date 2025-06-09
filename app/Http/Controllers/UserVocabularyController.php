@@ -3,6 +3,7 @@ namespace App\Http\Controllers;
 
 use App\Models\UserVocabulary;
 use App\Models\Vocabulary;
+use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Auth;
 
 class UserVocabularyController extends Controller
@@ -37,6 +38,32 @@ class UserVocabularyController extends Controller
             'message'   => $userVocabulary->favorite === 'yes'
             ? 'Added to favorites'
             : 'Removed from favorites',
+        ]);
+    }
+
+    public function updateStatus($vocabularyId, Request $request)
+    {
+        $request->validate([
+            'status' => 'required|in:learning,familiar,mastered',
+        ]);
+
+        $user           = Auth::user();
+        $userVocabulary = UserVocabulary::firstOrNew([
+            'user_id'       => $user->id,
+            'vocabulary_id' => $vocabularyId,
+        ]);
+
+        $userVocabulary->status = $request->status;
+
+        if (! $userVocabulary->exists) {
+            $userVocabulary->favorite = 'no';
+        }
+
+        $userVocabulary->save();
+
+        return response()->json([
+            'status'  => 'success',
+            'message' => 'Status updated successfully',
         ]);
     }
 

@@ -41,6 +41,12 @@ const breadcrumbItems = [
     { title: props.category.name, href: `/learning/${props.category.slug}` },
 ];
 
+const statusOptions = [
+    { value: 'learning', label: 'Learning' },
+    { value: 'familiar', label: 'Familiar' },
+    { value: 'mastered', label: 'Mastered' },
+];
+
 // For toggling between table and card view
 const viewMode = ref('card'); // 'table' or 'card'
 
@@ -51,7 +57,10 @@ const shuffledVocabularies = ref<Vocabulary[]>([]);
 const isShuffled = ref(false);
 
 // Initialize with original order
-shuffledVocabularies.value = [...props.vocabularies];
+shuffledVocabularies.value = props.vocabularies.map((vocab) => ({
+    ...vocab,
+    showStatusDropdown: false,
+}));
 
 // Function to shuffle vocabularies
 function shuffleVocabularies() {
@@ -67,7 +76,10 @@ function shuffleVocabularies() {
 
 // Function to reset original order
 function resetOrder() {
-    shuffledVocabularies.value = [...props.vocabularies];
+    shuffledVocabularies.value = props.vocabularies.map((vocab) => ({
+        ...vocab,
+        showStatusDropdown: false,
+    }));
     currentCardIndex.value = 0;
     isShuffled.value = false;
 }
@@ -105,6 +117,32 @@ async function toggleFavorite(vocabularyId: number) {
     } catch (error) {
         console.error('Error toggling favorite:', error);
         toast.error('Failed to update favorite status');
+    }
+}
+
+function onUpdateStatus(vocabularyId: number, newStatus: string) {
+    console.log('onUpdateStatus called with:', vocabularyId, newStatus);
+    updateStatus(vocabularyId, newStatus);
+}
+
+async function updateStatus(vocabularyId: number, newStatus: string) {
+    console.log('updateStatus called with:', vocabularyId, newStatus);
+    try {
+        const response = await axios.post(`/vocabulary/${vocabularyId}/status`, {
+            status: newStatus,
+        });
+        console.log('Response from server:', response.data);
+
+        // Update local state
+        const vocabIndex = shuffledVocabularies.value.findIndex((v) => v.id === vocabularyId);
+        if (vocabIndex !== -1) {
+            shuffledVocabularies.value[vocabIndex].status = newStatus;
+        }
+
+        toast.success('Status updated successfully');
+    } catch (error) {
+        console.error('Error updating status:', error);
+        toast.error('Failed to update status');
     }
 }
 </script>
@@ -146,6 +184,7 @@ async function toggleFavorite(vocabularyId: number) {
                             <TableHead>Arti</TableHead>
                             <TableHead>Contoh</TableHead>
                             <TableHead class="w-10">Favorite</TableHead>
+                            <TableHead>Status</TableHead>
                         </TableRow>
                     </TableHeader>
                     <TableBody>
@@ -159,6 +198,20 @@ async function toggleFavorite(vocabularyId: number) {
                                 <Button variant="ghost" size="icon" @click.stop="toggleFavorite(vocab.id)" class="h-8 w-8">
                                     <HeartIcon class="h-5 w-5" :class="vocab.is_favorited ? 'fill-red-500 text-red-500' : 'text-gray-400'" />
                                 </Button>
+                            </TableCell>
+                            <TableCell>
+                                <div class="flex space-x-1">
+                                    <Button
+                                        v-for="option in statusOptions"
+                                        :key="option.value"
+                                        size="sm"
+                                        :variant="vocab.status === option.value ? 'default' : 'outline'"
+                                        @click="onUpdateStatus(vocab.id, option.value)"
+                                        class="px-2 py-1 text-xs"
+                                    >
+                                        {{ option.label }}
+                                    </Button>
+                                </div>
                             </TableCell>
                         </TableRow>
                     </TableBody>
@@ -190,6 +243,30 @@ async function toggleFavorite(vocabularyId: number) {
                                 :class="shuffledVocabularies[currentCardIndex].is_favorited ? 'fill-red-500 text-red-500' : 'text-gray-400'"
                             />
                         </Button>
+                    </div>
+                    <div class="absolute top-20 right-4">
+                        <div class="flex flex-col items-end space-y-1">
+                            <span class="text-xs text-gray-500">Status:</span>
+                            <div class="flex space-x-1 rounded-md bg-white/90 p-1 shadow-sm dark:bg-gray-800/90">
+                                <button
+                                    v-for="option in statusOptions"
+                                    :key="option.value"
+                                    @click.stop="onUpdateStatus(shuffledVocabularies[currentCardIndex].id, option.value)"
+                                    class="rounded px-2 py-0.5 text-xs font-medium transition-colors"
+                                    :class="[
+                                        shuffledVocabularies[currentCardIndex].status === option.value
+                                            ? {
+                                                  learning: 'bg-blue-100 text-blue-800 dark:bg-blue-900 dark:text-blue-200',
+                                                  familiar: 'bg-yellow-100 text-yellow-800 dark:bg-yellow-900 dark:text-yellow-200',
+                                                  mastered: 'bg-green-100 text-green-800 dark:bg-green-900 dark:text-green-200',
+                                              }[option.value] || 'bg-gray-100 text-gray-800 dark:bg-gray-700 dark:text-white'
+                                            : 'text-gray-600 hover:bg-gray-100 dark:text-gray-400 dark:hover:bg-gray-700',
+                                    ]"
+                                >
+                                    {{ option.label }}
+                                </button>
+                            </div>
+                        </div>
                     </div>
                     <CardHeader>
                         <CardTitle class="text-center">
