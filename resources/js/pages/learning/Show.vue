@@ -5,8 +5,10 @@ import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from '@/components/ui/table';
 import AppLayout from '@/layouts/AppLayout.vue';
 import { Head } from '@inertiajs/vue3';
-import { ChevronLeft, Shuffle } from 'lucide-vue-next';
+import axios from 'axios';
+import { ChevronLeft, HeartIcon, Shuffle } from 'lucide-vue-next';
 import { ref } from 'vue';
+import { toast } from 'vue-sonner';
 
 interface Vocabulary {
     id: number;
@@ -14,6 +16,9 @@ interface Vocabulary {
     meaning: string;
     romaji: string;
     example: string;
+    is_favorited: boolean;
+    status: string;
+    last_reviewed_at: string | null;
 }
 
 interface Category {
@@ -84,6 +89,24 @@ function prevCard() {
 function toggleMeaning() {
     showMeaning.value = !showMeaning.value;
 }
+
+async function toggleFavorite(vocabularyId: number) {
+    try {
+        const response = await axios.post(`/vocabulary/${vocabularyId}/favorite`);
+
+        // Update local state
+        const vocabIndex = shuffledVocabularies.value.findIndex((v) => v.id === vocabularyId);
+        if (vocabIndex !== -1) {
+            shuffledVocabularies.value[vocabIndex].is_favorited = response.data.favorited;
+        }
+
+        // Show toast
+        toast.success(response.data.message);
+    } catch (error) {
+        console.error('Error toggling favorite:', error);
+        toast.error('Failed to update favorite status');
+    }
+}
 </script>
 
 <template>
@@ -91,22 +114,23 @@ function toggleMeaning() {
 
     <AppLayout :breadcrumbs="breadcrumbItems">
         <div class="px-4 py-6">
-            <div class="mb-6 flex items-center justify-between">
+            <div class="mb-6 space-y-4 sm:flex sm:items-center sm:justify-between sm:space-y-0">
                 <HeadingSmall :title="category.name" :description="category.description" />
 
-                <div class="flex gap-2">
+                <div class="flex flex-wrap justify-end gap-2">
                     <Button as="a" href="/learning" variant="outline" size="sm" class="flex items-center gap-1">
                         <ChevronLeft class="h-4 w-4" />
-                        Back to Categories
+                        <span class="sm:inline">Back to Categories</span>
                     </Button>
 
-                    <Button @click="viewMode = 'table'" size="sm" :variant="viewMode === 'table' ? 'default' : 'outline'"> Table View </Button>
-
-                    <Button @click="viewMode = 'card'" size="sm" :variant="viewMode === 'card' ? 'default' : 'outline'"> Flashcards </Button>
+                    <div class="flex gap-1">
+                        <Button @click="viewMode = 'table'" size="sm" :variant="viewMode === 'table' ? 'default' : 'outline'"> Table View </Button>
+                        <Button @click="viewMode = 'card'" size="sm" :variant="viewMode === 'card' ? 'default' : 'outline'"> Flashcards </Button>
+                    </div>
 
                     <Button @click="isShuffled ? resetOrder() : shuffleVocabularies()" size="sm" variant="outline" class="flex items-center gap-1">
                         <Shuffle class="h-4 w-4" />
-                        {{ isShuffled ? 'Reset Order' : 'Shuffle' }}
+                        {{ isShuffled ? 'Reset' : 'Shuffle' }}
                     </Button>
                 </div>
             </div>
@@ -121,6 +145,7 @@ function toggleMeaning() {
                             <TableHead>Romaji</TableHead>
                             <TableHead>Arti</TableHead>
                             <TableHead>Contoh</TableHead>
+                            <TableHead class="w-10">Favorite</TableHead>
                         </TableRow>
                     </TableHeader>
                     <TableBody>
@@ -130,6 +155,11 @@ function toggleMeaning() {
                             <TableCell>{{ vocab.romaji }}</TableCell>
                             <TableCell>{{ vocab.meaning }}</TableCell>
                             <TableCell>{{ vocab.example }}</TableCell>
+                            <TableCell class="w-10">
+                                <Button variant="ghost" size="icon" @click.stop="toggleFavorite(vocab.id)" class="h-8 w-8">
+                                    <HeartIcon class="h-5 w-5" :class="vocab.is_favorited ? 'fill-red-500 text-red-500' : 'text-gray-400'" />
+                                </Button>
+                            </TableCell>
                         </TableRow>
                     </TableBody>
                 </Table>
@@ -142,12 +172,25 @@ function toggleMeaning() {
             </div>
 
             <!-- Flashcard View -->
-            <div v-else-if="viewMode === 'card' && shuffledVocabularies.length > 0" class="flex flex-col items-center">
+            <div v-else-if="viewMode === 'card' && shuffledVocabularies.length > 0" class="relative flex flex-col items-center">
                 <div class="mb-4 text-center">
                     <p class="text-sm text-gray-500">Card {{ currentCardIndex + 1 }} of {{ shuffledVocabularies.length }}</p>
                 </div>
 
-                <Card class="flex h-64 w-full max-w-md cursor-pointer justify-between" @click="toggleMeaning">
+                <Card class="relative flex h-64 w-full max-w-md cursor-pointer justify-between" @click="toggleMeaning">
+                    <div class="absolute top-4 right-4">
+                        <Button
+                            variant="ghost"
+                            size="icon"
+                            @click.stop="toggleFavorite(shuffledVocabularies[currentCardIndex].id)"
+                            class="flex h-12 w-12 items-center justify-center"
+                        >
+                            <HeartIcon
+                                class="h-8 w-8"
+                                :class="shuffledVocabularies[currentCardIndex].is_favorited ? 'fill-red-500 text-red-500' : 'text-gray-400'"
+                            />
+                        </Button>
+                    </div>
                     <CardHeader>
                         <CardTitle class="text-center">
                             <span v-if="!showMeaning" class="text-4xl">{{ shuffledVocabularies[currentCardIndex].hiragana }}</span>

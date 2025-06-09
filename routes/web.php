@@ -1,6 +1,7 @@
 <?php
 
 use App\Http\Controllers\LearningController;
+use App\Http\Controllers\UserVocabularyController;
 use Illuminate\Support\Facades\Route;
 use Inertia\Inertia;
 
@@ -16,6 +17,10 @@ Route::middleware(['auth'])->group(function () {
     // Learning routes
     Route::get('/learning', [LearningController::class, 'index'])->name('index');
     Route::get('/learning/{slug}', [LearningController::class, 'show'])->name('show');
+
+    // User Vocabulary routes
+    Route::get('/favorites', [UserVocabularyController::class, 'favorites'])->name('favorites.index');
+    Route::post('/vocabulary/{vocabulary}/favorite', [UserVocabularyController::class, 'toggleFavorite'])->name('vocabulary.favorite.toggle');
 })->as('learning.');
 
 require __DIR__ . '/settings.php';

@@ -30,17 +30,22 @@ export const useNavigationStore = defineStore('navigation', {
                 href: '/learning',
                 icon: BookOpen,
             },
+            {
+                title: 'Favorite Vocabularies',
+                href: '/favorites',
+                icon: Folder,
+            },
         ] as NavItem[],
 
         rightNavItems: [
+            // {
+            //     title: 'Repository',
+            //     href: 'https://github.com/laravel/vue-starter-kit',
+            //     icon: Folder,
+            // },
             {
-                title: 'Repository',
-                href: 'https://github.com/laravel/vue-starter-kit',
-                icon: Folder,
-            },
-            {
-                title: 'Documentation',
-                href: 'https://laravel.com/docs/starter-kits#vue',
+                title: 'Source Code',
+                href: '#',
                 icon: BookOpen,
             },
         ] as NavItem[],

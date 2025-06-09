@@ -2,6 +2,8 @@
 namespace App\Models;
 
 // use Illuminate\Contracts\Auth\MustVerifyEmail;
+use App\Models\UserVocabulary;
+use App\Models\Vocabulary;
 use Illuminate\Database\Eloquent\Factories\HasFactory;
 use Illuminate\Foundation\Auth\User as Authenticatable;
 use Illuminate\Notifications\Notifiable;
@@ -54,5 +56,17 @@ class User extends Authenticatable
             'password'          => 'hashed',
             'role'              => \App\Casts\UserRole::class,
         ];
+    }
+
+    public function userVocabularies()
+    {
+        return $this->hasMany(UserVocabulary::class);
+    }
+
+    public function vocabularies()
+    {
+        return $this->belongsToMany(Vocabulary::class, 'user_vocabularies')
+            ->withPivot('status', 'favorite', 'last_reviewed_at')
+            ->withTimestamps();
     }
 }
