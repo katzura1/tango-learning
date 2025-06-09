@@ -1,0 +1,16 @@
+{
+    "name": "Laravel Tango",
+    "short_name": "Tango",
+    "background_color": "#6777ef",
+    "display": "fullscreen",
+    "description": "Aplikasi untuk belajar kosakata bahasa Jepang dengan flashcard interaktif",
+    "theme_color": "#6777ef",
+    "start_url": "/",
+    "icons": [
+        {
+            "src": "logo.png",
+            "sizes": "512x512",
+            "type": "image/png"
+        }
+    ]
+}
