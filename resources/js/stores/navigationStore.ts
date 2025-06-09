@@ -1,5 +1,5 @@
 import type { NavItem } from '@/types';
-import { BookOpen, Cog, Folder, LayoutGrid, Users } from 'lucide-vue-next';
+import { BookOpen, Folder, LayoutGrid, Users } from 'lucide-vue-next';
 import { defineStore } from 'pinia';
 
 export const useNavigationStore = defineStore('navigation', {
@@ -26,19 +26,9 @@ export const useNavigationStore = defineStore('navigation', {
                 ],
             },
             {
-                title: 'Settings',
-                href: '/settings',
-                icon: Cog,
-                children: [
-                    {
-                        title: 'Profile',
-                        href: '/settings/profile',
-                    },
-                    {
-                        title: 'Security',
-                        href: '/settings/security',
-                    },
-                ],
+                title: 'Learning',
+                href: '/learning',
+                icon: BookOpen,
             },
         ] as NavItem[],
 
