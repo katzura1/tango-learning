@@ -1,8 +1,10 @@
 <script setup lang="ts">
+import Skeleton from '@/components/ui/skeleton/Skeleton.vue';
 import AppLayout from '@/layouts/AppLayout.vue';
 import { type BreadcrumbItem } from '@/types';
 import { Head } from '@inertiajs/vue3';
-import PlaceholderPattern from '../components/PlaceholderPattern.vue';
+import axios from 'axios';
+import { onMounted, ref } from 'vue';
 
 const breadcrumbs: BreadcrumbItem[] = [
     {
@@ -10,6 +12,54 @@ const breadcrumbs: BreadcrumbItem[] = [
         href: '/dashboard',
     },
 ];
+
+type DataDashboard = {
+    totalVocabularyLearned: number;
+    progressOverview: {
+        learning: number;
+        familiar: number;
+        mastered: number;
+    };
+};
+
+const data = ref<DataDashboard | null>(null);
+
+const isLoading = ref(false);
+
+async function fetchData() {
+    isLoading.value = true;
+    try {
+        // await 5 seconds to simulate loading
+        await new Promise((resolve) => setTimeout(resolve, 5000));
+        // Simulate an API call
+        await axios
+            .get(route('data.dashboard'))
+            .then((response) => {
+                // Handle the response data
+                console.log('Data fetched successfully:', response.data);
+                data.value = {
+                    totalVocabularyLearned: response.data.totalCount,
+                    progressOverview: {
+                        learning: response.data.learningPercentage,
+                        familiar: response.data.familiarPercentage,
+                        mastered: response.data.masteredPercentage,
+                    },
+                };
+                console.log('Processed data:', data.value);
+            })
+            .catch((error) => {
+                console.error('Error fetching data:', error);
+            });
+    } catch (error) {
+        console.error('Error fetching data:', error);
+    } finally {
+        isLoading.value = false;
+    }
+}
+
+onMounted(() => {
+    fetchData();
+});
 </script>
 
 <template>
@@ -18,18 +68,49 @@ const breadcrumbs: BreadcrumbItem[] = [
     <AppLayout :breadcrumbs="breadcrumbs">
         <div class="flex h-full flex-1 flex-col gap-4 rounded-xl p-4">
             <div class="grid auto-rows-min gap-4 md:grid-cols-3">
-                <div class="relative aspect-video overflow-hidden rounded-xl border border-sidebar-border/70 dark:border-sidebar-border">
-                    <PlaceholderPattern />
+                <div class="relative overflow-hidden rounded-xl border border-sidebar-border/70 p-4 dark:border-sidebar-border">
+                    <h3 class="scroll-m-20 text-lg font-semibold tracking-tight">Total Vocabulary Learned</h3>
+                    <template v-if="!isLoading">
+                        <div class="mt-2 flex items-end justify-between">
+                            <div>
+                                <p class="text-3xl font-bold" v-text="data?.totalVocabularyLearned"></p>
+                                <p class="text-sm text-muted-foreground">+12 this week</p>
+                            </div>
+                        </div>
+                    </template>
+                    <template v-else>
+                        <div class="mt-2 space-y-2">
+                            <Skeleton class="h-8 w-12" />
+                            <Skeleton class="h-4 w-50" />
+                        </div>
+                    </template>
                 </div>
-                <div class="relative aspect-video overflow-hidden rounded-xl border border-sidebar-border/70 dark:border-sidebar-border">
-                    <PlaceholderPattern />
+                <div class="relative overflow-hidden rounded-xl border border-sidebar-border/70 p-4 dark:border-sidebar-border">
+                    <h3 class="scroll-m-20 text-lg font-semibold tracking-tight">Progress Overview</h3>
+                    <div class="mt-2 flex flex-col gap-2">
+                        <div class="flex items-center justify-between">
+                            <span class="text-sm">Learning</span>
+                            <div class="h-2 w-32 rounded-full bg-primary-foreground">
+                                <div class="h-full w-3/4 rounded-full bg-primary"></div>
+                            </div>
+                            <span class="text-sm">75%</span>
+                        </div>
+                        <div class="flex items-center justify-between">
+                            <span class="text-sm">Familliar</span>
+                            <div class="h-2 w-32 rounded-full bg-primary-foreground">
+                                <div class="h-full w-1/2 rounded-full bg-primary"></div>
+                            </div>
+                            <span class="text-sm">50%</span>
+                        </div>
+                        <div class="flex items-center justify-between">
+                            <span class="text-sm">Mastered</span>
+                            <div class="h-2 w-32 rounded-full bg-primary-foreground">
+                                <div class="h-full w-1/4 rounded-full bg-primary"></div>
+                            </div>
+                            <span class="text-sm">25%</span>
+                        </div>
+                    </div>
                 </div>
-                <div class="relative aspect-video overflow-hidden rounded-xl border border-sidebar-border/70 dark:border-sidebar-border">
-                    <PlaceholderPattern />
-                </div>
-            </div>
-            <div class="relative min-h-[100vh] flex-1 rounded-xl border border-sidebar-border/70 md:min-h-min dark:border-sidebar-border">
-                <PlaceholderPattern />
             </div>
         </div>
     </AppLayout>

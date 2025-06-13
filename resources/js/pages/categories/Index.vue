@@ -286,10 +286,10 @@ onMounted(fetchCategories);
 
     <AppLayout :breadcrumbs="breadcrumbItems">
         <div class="flex flex-col space-y-6 px-4 py-6">
-            <div class="align-center flex items-center justify-between">
-                <HeadingSmall title="Categories" description="Manage categories for your application." />
+            <div class="align-center flex flex-col items-center justify-end gap-3">
+                <HeadingSmall class="w-full" title="Categories" description="Manage categories for your application." />
 
-                <div class="flex justify-end">
+                <div class="flex w-full justify-end">
                     <Button @click="openAdd">Add Category</Button>
                     <Button variant="outline" class="ml-2" @click="fetchCategories">Refresh</Button>
                 </div>

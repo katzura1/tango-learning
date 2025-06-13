@@ -85,4 +85,31 @@ class UserVocabularyController extends Controller
             'favorites' => $favorites,
         ]);
     }
+
+    public function dataDashboard()
+    {
+        $user = Auth::user();
+
+        $userVocabulary = UserVocabulary::where('user_id', $user->id)
+            ->get();
+
+        $learningCount = $userVocabulary->where('status', 'learning')->count();
+        $familiarCount = $userVocabulary->where('status', 'familiar')->count();
+        $masteredCount = $userVocabulary->where('status', 'mastered')->count();
+        $totalCount    = $userVocabulary->count();
+
+        $learningPercentage = $totalCount > 0 ? ($learningCount / $totalCount) * 100 : 0;
+        $familiarPercentage = $totalCount > 0 ? ($familiarCount / $totalCount) * 100 : 0;
+        $masteredPercentage = $totalCount > 0 ? ($masteredCount / $totalCount) * 100 : 0;
+
+        return response()->json([
+            'learningCount'      => $learningCount,
+            'familiarCount'      => $familiarCount,
+            'masteredCount'      => $masteredCount,
+            'totalCount'         => $totalCount,
+            'learningPercentage' => round($learningPercentage, 2),
+            'familiarPercentage' => round($familiarPercentage, 2),
+            'masteredPercentage' => round($masteredPercentage, 2),
+        ]);
+    }
 }
