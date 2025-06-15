@@ -73,8 +73,8 @@ onMounted(() => {
                     <template v-if="!isLoading">
                         <div class="mt-2 flex items-end justify-between">
                             <div>
-                                <p class="text-3xl font-bold" v-text="data?.totalVocabularyLearned"></p>
-                                <p class="text-sm text-muted-foreground">+12 this week</p>
+                                <p class="text-3xl font-bold transition-all duration-1000 ease-out" v-text="data?.totalVocabularyLearned"></p>
+                                <p class="text-sm text-muted-foreground transition-all duration-1000 ease-out">+12 this week</p>
                             </div>
                         </div>
                     </template>
@@ -88,27 +88,45 @@ onMounted(() => {
                 <div class="relative overflow-hidden rounded-xl border border-sidebar-border/70 p-4 dark:border-sidebar-border">
                     <h3 class="scroll-m-20 text-lg font-semibold tracking-tight">Progress Overview</h3>
                     <div class="mt-2 flex flex-col gap-2">
-                        <div class="flex items-center justify-between">
-                            <span class="text-sm">Learning</span>
-                            <div class="h-2 w-32 rounded-full bg-primary-foreground">
-                                <div class="h-full w-3/4 rounded-full bg-primary"></div>
+                        <template v-if="!isLoading">
+                            <div class="flex items-center justify-between">
+                                <span class="text-sm">Learning</span>
+                                <div class="h-2 w-32 rounded-full bg-primary-foreground">
+                                    <div
+                                        class="h-full rounded-full bg-primary transition-all duration-1000 ease-out"
+                                        :style="{ width: (data?.progressOverview.learning ?? 0) + '%' }"
+                                    ></div>
+                                </div>
+                                <span class="text-sm">{{ data?.progressOverview.learning }}%</span>
                             </div>
-                            <span class="text-sm">75%</span>
-                        </div>
-                        <div class="flex items-center justify-between">
-                            <span class="text-sm">Familliar</span>
-                            <div class="h-2 w-32 rounded-full bg-primary-foreground">
-                                <div class="h-full w-1/2 rounded-full bg-primary"></div>
+                            <div class="flex items-center justify-between">
+                                <span class="text-sm">Familiar</span>
+                                <div class="h-2 w-32 rounded-full bg-primary-foreground">
+                                    <div
+                                        class="h-full rounded-full bg-primary transition-all duration-1000 ease-out"
+                                        :style="{ width: (data?.progressOverview.familiar ?? 0) + '%' }"
+                                    ></div>
+                                </div>
+                                <span class="text-sm">{{ data?.progressOverview.familiar }}%</span>
                             </div>
-                            <span class="text-sm">50%</span>
-                        </div>
-                        <div class="flex items-center justify-between">
-                            <span class="text-sm">Mastered</span>
-                            <div class="h-2 w-32 rounded-full bg-primary-foreground">
-                                <div class="h-full w-1/4 rounded-full bg-primary"></div>
+                            <div class="flex items-center justify-between">
+                                <span class="text-sm">Mastered</span>
+                                <div class="h-2 w-32 rounded-full bg-primary-foreground">
+                                    <div
+                                        class="h-full rounded-full bg-primary transition-all duration-1000 ease-out"
+                                        :style="{ width: (data?.progressOverview.mastered ?? 0) + '%' }"
+                                    ></div>
+                                </div>
+                                <span class="text-sm">{{ data?.progressOverview.mastered }}%</span>
                             </div>
-                            <span class="text-sm">25%</span>
-                        </div>
+                        </template>
+                        <template v-else>
+                            <div class="space-y-2">
+                                <Skeleton class="h-4 w-full" />
+                                <Skeleton class="h-4 w-full" />
+                                <Skeleton class="h-4 w-full" />
+                            </div>
+                        </template>
                     </div>
                 </div>
             </div>
