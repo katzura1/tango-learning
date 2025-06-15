@@ -1,6 +1,7 @@
 # Laravel Tango
 
 Laravel Tango is a Laravel 12 application for managing Japanese vocabulary learning with hiragana support and user tracking.
+![Laravel Tango Preview](preview.png)
 
 ## Features
 
