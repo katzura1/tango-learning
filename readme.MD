@@ -22,7 +22,7 @@ Laravel Tango is a Laravel 12 application for managing Japanese vocabulary learn
 1. Clone the repository:
 
 ```bash
-git clone https://github.com/yourusername/laravel-tango.git
+git clone https://github.com/katzura1/laravel-tango.git
 cd laravel-tango
 ```
 
