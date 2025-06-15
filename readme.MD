@@ -61,7 +61,7 @@ php artisan migrate
 6. Start the server:
 
 ```bash
-php artisan serve
+composer run dev
 ```
 
 ## Project Structure
